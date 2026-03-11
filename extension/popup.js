@@ -1,9 +1,59 @@
 const STATUS_DURATION_MS = 3000;
 
 async function loadCookies() {
+  const stored = await chrome.storage.local.get("importedCookies");
+  if (stored.importedCookies) {
+    return stored.importedCookies;
+  }
   const url = chrome.runtime.getURL("cookies.json");
   const response = await fetch(url);
   return response.json();
+}
+
+function validateCookies(data) {
+  if (!Array.isArray(data)) throw new Error("JSON must be an array.");
+  if (data.length === 0) throw new Error("Cookie array is empty.");
+  for (let i = 0; i < data.length; i++) {
+    const c = data[i];
+    if (typeof c !== "object" || c === null || Array.isArray(c))
+      throw new Error(`Item ${i} is not an object.`);
+    if (typeof c.name !== "string" || !c.name.trim())
+      throw new Error(`Item ${i} missing required string field "name".`);
+    if (typeof c.value !== "string")
+      throw new Error(`Item ${i} missing required string field "value".`);
+    if (typeof c.domain !== "string" || !c.domain.trim())
+      throw new Error(`Item ${i} missing required string field "domain".`);
+  }
+}
+
+function exportCookies(cookies) {
+  const json = JSON.stringify(cookies, null, 2);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "cookies.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importCookies(onSuccess) {
+  const fileInput = document.getElementById("file-input");
+  fileInput.value = "";
+  fileInput.onchange = async () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      validateCookies(data);
+      await chrome.storage.local.set({ importedCookies: data });
+      onSuccess(data);
+    } catch (err) {
+      showStatus("Import failed: " + err.message, "error");
+    }
+  };
+  fileInput.click();
 }
 
 function buildUrl(cookie) {
@@ -117,12 +167,14 @@ async function clearCookies(cookies) {
 function setButtonsDisabled(disabled) {
   document.getElementById("btn-populate").disabled = disabled;
   document.getElementById("btn-clear").disabled = disabled;
+  document.getElementById("btn-export").disabled = disabled;
+  document.getElementById("btn-import").disabled = disabled;
 }
 
 async function init() {
   let cookies;
   try {
-    cookies = await loadCookies();
+    cookies = await loadCookies();  // let (not const) so import can reassign
   } catch (err) {
     showStatus("Failed to load cookies.json: " + err.message, "error");
     return;
@@ -153,6 +205,19 @@ async function init() {
     } else {
       showStatus(`${ok} cleared, ${fail} failed. Check the console for details.`, "error");
     }
+  });
+
+  document.getElementById("btn-export").addEventListener("click", () => {
+    exportCookies(cookies);
+  });
+
+  document.getElementById("btn-import").addEventListener("click", () => {
+    importCookies((newCookies) => {
+      cookies = newCookies;
+      renderTable(cookies);
+      showErrors([]);
+      showStatus(`Imported ${cookies.length} cookie${cookies.length !== 1 ? "s" : ""}.`, "success");
+    });
   });
 }
 
