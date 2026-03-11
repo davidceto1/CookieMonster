@@ -73,17 +73,53 @@ function showStatus(message, type) {
   }, STATUS_DURATION_MS);
 }
 
-function renderTable(cookies) {
+function renderTable(cookies, onEdit) {
   const tbody = document.getElementById("cookie-tbody");
   tbody.innerHTML = "";
-  for (const c of cookies) {
+  for (let i = 0; i < cookies.length; i++) {
+    const c = cookies[i];
     const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="name" title="${c.name}">${c.name}</td>
-      <td title="${c.value}">${truncate(c.value, 22)}</td>
-      <td title="${c.domain}">${c.domain}</td>
-      <td class="${c.secure ? "secure-yes" : "secure-no"}">${c.secure ? "Yes" : "No"}</td>
-    `;
+
+    const nameTd = document.createElement("td");
+    nameTd.className = "name editable";
+    nameTd.contentEditable = "true";
+    nameTd.textContent = c.name;
+    nameTd.addEventListener("blur", () => {
+      const val = nameTd.textContent.trim();
+      if (!val) { nameTd.textContent = cookies[i].name; return; }
+      cookies[i] = { ...cookies[i], name: val };
+      onEdit?.();
+    });
+    nameTd.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); nameTd.blur(); }
+    });
+
+    const valueTd = document.createElement("td");
+    valueTd.className = "editable";
+    valueTd.contentEditable = "true";
+    valueTd.title = c.value;
+    valueTd.textContent = truncate(c.value, 22);
+    valueTd.addEventListener("focus", () => { valueTd.textContent = cookies[i].value; });
+    valueTd.addEventListener("blur", () => {
+      const val = valueTd.textContent;
+      cookies[i] = { ...cookies[i], value: val };
+      valueTd.title = val;
+      valueTd.textContent = truncate(val, 22);
+      onEdit?.();
+    });
+    valueTd.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); valueTd.blur(); }
+    });
+
+    const domainTd = document.createElement("td");
+    domainTd.title = c.domain;
+    domainTd.textContent = c.domain;
+
+    const secureTd = document.createElement("td");
+    secureTd.className = c.secure ? "secure-yes" : "secure-no";
+    secureTd.textContent = c.secure ? "Yes" : "No";
+
+    tr.append(nameTd, valueTd, domainTd, secureTd);
     tbody.appendChild(tr);
   }
 }
@@ -180,7 +216,9 @@ async function init() {
     return;
   }
 
-  renderTable(cookies);
+  const saveCookies = () => chrome.storage.local.set({ importedCookies: cookies });
+
+  renderTable(cookies, saveCookies);
 
   document.getElementById("btn-populate").addEventListener("click", async () => {
     setButtonsDisabled(true);
@@ -214,7 +252,7 @@ async function init() {
   document.getElementById("btn-import").addEventListener("click", () => {
     importCookies((newCookies) => {
       cookies = newCookies;
-      renderTable(cookies);
+      renderTable(cookies, saveCookies);
       showErrors([]);
       showStatus(`Imported ${cookies.length} cookie${cookies.length !== 1 ? "s" : ""}.`, "success");
     });
