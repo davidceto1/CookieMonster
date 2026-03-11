@@ -56,6 +56,22 @@ function importCookies(onSuccess) {
   fileInput.click();
 }
 
+async function readFromTab() {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.url) throw new Error("No active tab found.");
+  const chromeCookies = await chrome.cookies.getAll({ url: tab.url });
+  if (chromeCookies.length === 0) throw new Error("No cookies found for this tab.");
+  return chromeCookies.map(c => ({
+    name: c.name,
+    value: c.value,
+    domain: c.domain.startsWith(".") ? c.domain.slice(1) : c.domain,
+    path: c.path,
+    secure: c.secure,
+    httpOnly: c.httpOnly,
+    sameSite: c.sameSite,
+  }));
+}
+
 function buildUrl(cookie) {
   const scheme = cookie.secure ? "https" : "http";
   return `${scheme}://${cookie.domain}${cookie.path || "/"}`;
@@ -203,6 +219,7 @@ async function clearCookies(cookies) {
 function setButtonsDisabled(disabled) {
   document.getElementById("btn-populate").disabled = disabled;
   document.getElementById("btn-clear").disabled = disabled;
+  document.getElementById("btn-read-tab").disabled = disabled;
   document.getElementById("btn-export").disabled = disabled;
   document.getElementById("btn-import").disabled = disabled;
 }
@@ -243,6 +260,21 @@ async function init() {
     } else {
       showStatus(`${ok} cleared, ${fail} failed. Check the console for details.`, "error");
     }
+  });
+
+  document.getElementById("btn-read-tab").addEventListener("click", async () => {
+    setButtonsDisabled(true);
+    try {
+      const tabCookies = await readFromTab();
+      cookies = tabCookies;
+      await saveCookies();
+      renderTable(cookies, saveCookies);
+      showErrors([]);
+      showStatus(`Read ${cookies.length} cookie${cookies.length !== 1 ? "s" : ""} from current tab.`, "success");
+    } catch (err) {
+      showStatus("Read failed: " + err.message, "error");
+    }
+    setButtonsDisabled(false);
   });
 
   document.getElementById("btn-export").addEventListener("click", () => {
