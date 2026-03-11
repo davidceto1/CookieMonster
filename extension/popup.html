@@ -12,6 +12,13 @@
     <p class="subtitle">Test cookie populator for Chrome</p>
   </header>
 
+  <section class="env-bar">
+    <label for="env-select">Environment</label>
+    <select id="env-select"></select>
+    <button id="btn-add-env" class="btn-icon" title="Add environment">+</button>
+    <button id="btn-delete-env" class="btn-icon btn-icon-danger" title="Delete environment">×</button>
+  </section>
+
   <section class="actions">
     <button id="btn-populate" class="btn btn-primary">Populate All Cookies</button>
     <button id="btn-clear" class="btn btn-danger">Clear All Cookies</button>
@@ -19,8 +26,8 @@
 
   <section class="actions">
     <button id="btn-read-tab" class="btn btn-secondary">Read from Tab</button>
-    <button id="btn-export" class="btn btn-secondary">Export Cookies</button>
     <button id="btn-import" class="btn btn-secondary">Import Cookies</button>
+    <button id="btn-export" class="btn btn-secondary">Export Cookies</button>
     <input type="file" id="file-input" accept=".json" hidden />
   </section>
 
