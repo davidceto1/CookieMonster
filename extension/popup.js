@@ -42,19 +42,36 @@ function truncate(str, max) {
   return str.length > max ? str.slice(0, max) + "…" : str;
 }
 
+function showErrors(errors) {
+  const section = document.getElementById("error-details");
+  const list = document.getElementById("error-list");
+  list.innerHTML = "";
+  if (errors.length === 0) {
+    section.hidden = true;
+    return;
+  }
+  for (const { name, url, reason } of errors) {
+    const li = document.createElement("li");
+    li.textContent = `${name} (${url}): ${reason}`;
+    list.appendChild(li);
+  }
+  section.hidden = false;
+}
+
 async function populateCookies(cookies) {
   let ok = 0;
   let fail = 0;
+  const errors = [];
   for (const cookie of cookies) {
+    const url = buildUrl(cookie);
     const details = {
-      url: buildUrl(cookie),
+      url,
       name: cookie.name,
       value: cookie.value,
-      domain: cookie.domain,
       path: cookie.path || "/",
       secure: cookie.secure || false,
       httpOnly: cookie.httpOnly || false,
-      sameSite: cookie.sameSite || "Lax",
+      sameSite: (cookie.sameSite || "lax").toLowerCase(),
     };
     try {
       const result = await chrome.cookies.set(details);
@@ -62,13 +79,15 @@ async function populateCookies(cookies) {
         ok++;
       } else {
         fail++;
-        console.warn("Failed to set cookie:", cookie.name, chrome.runtime.lastError);
+        const reason = chrome.runtime.lastError?.message || "cookies.set returned null";
+        errors.push({ name: cookie.name, url, reason });
       }
     } catch (err) {
       fail++;
-      console.error("Error setting cookie:", cookie.name, err);
+      errors.push({ name: cookie.name, url, reason: err.message });
     }
   }
+  showErrors(errors);
   return { ok, fail };
 }
 
@@ -117,9 +136,10 @@ async function init() {
     const { ok, fail } = await populateCookies(cookies);
     setButtonsDisabled(false);
     if (fail === 0) {
+      showErrors([]);
       showStatus(`${ok} cookie${ok !== 1 ? "s" : ""} set successfully.`, "success");
     } else {
-      showStatus(`${ok} set, ${fail} failed. Check the console for details.`, "error");
+      showStatus(`${ok} set, ${fail} failed. See errors below.`, "error");
     }
   });
 
