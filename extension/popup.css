@@ -170,6 +170,17 @@ tbody td.name {
   font-weight: 600;
 }
 
+tbody td.editable:hover {
+  background: #1e2040;
+  cursor: text;
+}
+
+tbody td.editable:focus {
+  outline: 1px solid #444466;
+  background: #1e2040;
+  color: #fff;
+}
+
 tbody td.secure-yes {
   color: #5cb85c;
 }
