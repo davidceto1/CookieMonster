@@ -91,6 +91,36 @@ h1 {
   color: #5b9bd5;
 }
 
+#error-details {
+  background: #3a1e1e;
+  border: 1px solid #7d2e2e;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+#error-details h3 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #e05260;
+  margin-bottom: 6px;
+}
+
+#error-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#error-list li {
+  font-size: 11px;
+  color: #ffaaaa;
+  word-break: break-all;
+}
+
 .cookie-list h2 {
   font-size: 12px;
   text-transform: uppercase;

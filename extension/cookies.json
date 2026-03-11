@@ -37,7 +37,7 @@
   },
   {
     "name": "feature_flags",
-    "value": "darkMode=true;betaFeatures=true",
+    "value": "darkMode=true|betaFeatures=true",
     "domain": "example.com",
     "path": "/",
     "secure": false,
