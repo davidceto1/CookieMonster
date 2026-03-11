@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "CookieMonster",
+  "version": "1.0",
+  "description": "Populate and clear test cookies in Chrome with one click.",
+  "permissions": ["cookies"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "CookieMonster"
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}

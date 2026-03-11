@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CookieMonster</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header>
+    <h1>🍪 CookieMonster</h1>
+    <p class="subtitle">Test cookie populator for Chrome</p>
+  </header>
+
+  <section class="actions">
+    <button id="btn-populate" class="btn btn-primary">Populate All Cookies</button>
+    <button id="btn-clear" class="btn btn-danger">Clear All Cookies</button>
+  </section>
+
+  <section class="status" id="status" hidden>
+    <span id="status-message"></span>
+  </section>
+
+  <section class="cookie-list">
+    <h2>Configured Cookies</h2>
+    <table id="cookie-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Value</th>
+          <th>Domain</th>
+          <th>Secure</th>
+        </tr>
+      </thead>
+      <tbody id="cookie-tbody"></tbody>
+    </table>
+  </section>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+[
+  {
+    "name": "session_id",
+    "value": "abc123xyz789",
+    "domain": "example.com",
+    "path": "/",
+    "secure": false,
+    "httpOnly": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "auth_token",
+    "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test",
+    "domain": "example.com",
+    "path": "/",
+    "secure": true,
+    "httpOnly": false,
+    "sameSite": "Strict"
+  },
+  {
+    "name": "user_id",
+    "value": "42",
+    "domain": "example.com",
+    "path": "/",
+    "secure": false,
+    "httpOnly": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "user_role",
+    "value": "admin",
+    "domain": "example.com",
+    "path": "/",
+    "secure": false,
+    "httpOnly": false,
+    "sameSite": "Lax"
+  },
+  {
+    "name": "feature_flags",
+    "value": "darkMode=true;betaFeatures=true",
+    "domain": "example.com",
+    "path": "/",
+    "secure": false,
+    "httpOnly": false,
+    "sameSite": "Lax"
+  }
+]
