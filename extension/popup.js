@@ -42,24 +42,42 @@ function setActiveCookies(cookies) {
 }
 
 // ── Validation / IO ───────────────────────────────────────────────────────────
-function validateCookies(data) {
-  if (!Array.isArray(data)) throw new Error("JSON must be an array.");
-  if (data.length === 0) throw new Error("Cookie array is empty.");
+function validateCookieArray(data, label) {
+  if (!Array.isArray(data)) throw new Error(`${label} must be an array.`);
+  if (data.length === 0) throw new Error(`${label} is empty.`);
   for (let i = 0; i < data.length; i++) {
     const c = data[i];
     if (typeof c !== "object" || c === null || Array.isArray(c))
-      throw new Error(`Item ${i} is not an object.`);
+      throw new Error(`${label} item ${i} is not an object.`);
     if (typeof c.name !== "string" || !c.name.trim())
-      throw new Error(`Item ${i} missing required string field "name".`);
+      throw new Error(`${label} item ${i} missing required string field "name".`);
     if (typeof c.value !== "string")
-      throw new Error(`Item ${i} missing required string field "value".`);
+      throw new Error(`${label} item ${i} missing required string field "value".`);
     if (typeof c.domain !== "string" || !c.domain.trim())
-      throw new Error(`Item ${i} missing required string field "domain".`);
+      throw new Error(`${label} item ${i} missing required string field "domain".`);
   }
 }
 
-function exportCookies(cookies) {
-  const json = JSON.stringify(cookies, null, 2);
+function validateImport(data) {
+  if (Array.isArray(data)) {
+    // Legacy flat array format — treat as single environment
+    validateCookieArray(data, "Cookie array");
+    return { type: "legacy", cookies: data };
+  }
+  if (typeof data === "object" && data !== null) {
+    // Environments object format
+    const envNames = Object.keys(data);
+    if (envNames.length === 0) throw new Error("Environments object is empty.");
+    for (const name of envNames) {
+      validateCookieArray(data[name], `Environment "${name}"`);
+    }
+    return { type: "environments", environments: data };
+  }
+  throw new Error("JSON must be an environments object or a cookie array.");
+}
+
+function exportCookies() {
+  const json = JSON.stringify(state.environments, null, 2);
   const blob = new Blob([json], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -78,8 +96,8 @@ function importCookies(onSuccess) {
     try {
       const text = await file.text();
       const data = JSON.parse(text);
-      validateCookies(data);
-      onSuccess(data);
+      const result = validateImport(data);
+      onSuccess(result);
     } catch (err) {
       showStatus("Import failed: " + err.message, "error");
     }
@@ -367,17 +385,29 @@ async function init() {
 
   // Export
   document.getElementById("btn-export").addEventListener("click", () => {
-    exportCookies(cookies);
+    exportCookies();
   });
 
   // Import
   document.getElementById("btn-import").addEventListener("click", () => {
-    importCookies((newCookies) => {
-      cookies = newCookies;
-      saveCookies();
-      renderTable(cookies, saveCookies);
-      showErrors([]);
-      showStatus(`Imported ${cookies.length} cookie${cookies.length !== 1 ? "s" : ""}.`, "success");
+    importCookies((result) => {
+      if (result.type === "environments") {
+        state.environments = result.environments;
+        const envNames = Object.keys(result.environments);
+        state.activeEnvironment = envNames[0];
+        cookies = getActiveCookies();
+        saveState();
+        renderEnvBar();
+        renderTable(cookies, saveCookies);
+        showErrors([]);
+        showStatus(`Imported ${envNames.length} environment${envNames.length !== 1 ? "s" : ""}.`, "success");
+      } else {
+        cookies = result.cookies;
+        saveCookies();
+        renderTable(cookies, saveCookies);
+        showErrors([]);
+        showStatus(`Imported ${cookies.length} cookie${cookies.length !== 1 ? "s" : ""}.`, "success");
+      }
     });
   });
 }
